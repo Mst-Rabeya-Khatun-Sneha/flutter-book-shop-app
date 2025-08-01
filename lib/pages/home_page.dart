@@ -14,18 +14,27 @@ class HomePage extends StatelessWidget {
       appBar: AppBar(
         title: const Text("📚 Online Bookstore"),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.shopping_cart),
+          TextButton(
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const CartPage()));
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CartPage()),
+              );
             },
+            child: const Text(
+              "Cart",
+              style: TextStyle(color: Colors.white),
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.logout),
+          TextButton(
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
             },
-          )
+            child: const Text(
+              "Logout",
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
         ],
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -42,9 +51,12 @@ class HomePage extends StatelessWidget {
           final books = snapshot.data!.docs;
 
           return GridView.builder(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 80),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              childAspectRatio: 0.7,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 0.65,
             ),
             itemCount: books.length,
             itemBuilder: (context, index) {
@@ -53,19 +65,89 @@ class HomePage extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => BookDetailsPage(book: books[index])),
+                    MaterialPageRoute(
+                        builder: (_) => BookDetailsPage(book: books[index])),
                   );
                 },
                 child: Card(
-                  margin: const EdgeInsets.all(8),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  elevation: 3,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Image.network(book['imageUrl'], height: 120, fit: BoxFit.cover),
+                      ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(12),
+                            topRight: Radius.circular(12)),
+                        child: Image.network(
+                          book['imageUrl'] ?? '',
+                          height: 120,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                          const Icon(Icons.image_not_supported,
+                              size: 50, color: Colors.grey),
+                        ),
+                      ),
                       Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: Text(book['title'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                        child: Text(
+                          book['title'],
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                      Text("৳${book['price']}", style: const TextStyle(color: Colors.green)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Text(
+                          "৳${book['price']}",
+                          style: const TextStyle(
+                              color: Colors.green, fontSize: 13),
+                        ),
+                      ),
+                      const Spacer(),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => AddBookPage(
+                                      bookId: books[index].id,
+                                      existingData: book,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                "Edit",
+                                style: TextStyle(
+                                    color: Colors.blue, fontSize: 14),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                FirebaseFirestore.instance
+                                    .collection('books')
+                                    .doc(books[index].id)
+                                    .delete();
+                              },
+                              child: const Text(
+                                "Delete",
+                                style: TextStyle(
+                                    color: Colors.red, fontSize: 14),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
                     ],
                   ),
                 ),
@@ -77,7 +159,8 @@ class HomePage extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const AddBookPage()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const AddBookPage()));
         },
       ),
     );

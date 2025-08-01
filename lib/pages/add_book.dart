@@ -2,7 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class AddBookPage extends StatefulWidget {
-  const AddBookPage({super.key});
+  final String? bookId;
+  final Map<String, dynamic>? existingData;
+
+  const AddBookPage({super.key, this.bookId, this.existingData});
 
   @override
   State<AddBookPage> createState() => _AddBookPageState();
@@ -12,35 +15,97 @@ class _AddBookPageState extends State<AddBookPage> {
   final titleController = TextEditingController();
   final priceController = TextEditingController();
   final imageUrlController = TextEditingController();
+  final descriptionController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    // Populate controllers if editing existing book
+    if (widget.existingData != null) {
+      titleController.text = widget.existingData!['title'] ?? '';
+      priceController.text = widget.existingData!['price']?.toString() ?? '';
+      imageUrlController.text = widget.existingData!['imageUrl'] ?? '';
+      descriptionController.text = widget.existingData!['description'] ?? '';
+    }
+  }
+
+  /// Add new book
   Future<void> addBook() async {
+    if (titleController.text.trim().isEmpty ||
+        priceController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("⚠ Please fill title & price")),
+      );
+      return;
+    }
+
     await FirebaseFirestore.instance.collection('books').add({
       'title': titleController.text.trim(),
-      'price': priceController.text.trim(),
+      'price': double.tryParse(priceController.text.trim()) ?? 0,
       'imageUrl': imageUrlController.text.trim(),
+      'description': descriptionController.text.trim(),
     });
+    Navigator.pop(context); // go back after adding
+  }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("✅ Book added successfully!")),
-    );
-
-    Navigator.pop(context);
+  /// Update existing book
+  Future<void> updateBook(String id) async {
+    await FirebaseFirestore.instance.collection('books').doc(id).update({
+      'title': titleController.text.trim(),
+      'price': double.tryParse(priceController.text.trim()) ?? 0,
+      'imageUrl': imageUrlController.text.trim(),
+      'description': descriptionController.text.trim(),
+    });
+    Navigator.pop(context); // go back after updating
   }
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.bookId != null;
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Add New Book")),
+      appBar: AppBar(
+        title: Text(isEditing ? "Edit Book" : "Add Book"),
+      ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(controller: titleController, decoration: const InputDecoration(labelText: "Book Title")),
-            TextField(controller: priceController, decoration: const InputDecoration(labelText: "Price")),
-            TextField(controller: imageUrlController, decoration: const InputDecoration(labelText: "Image URL")),
-            const SizedBox(height: 20),
-            ElevatedButton(onPressed: addBook, child: const Text("Add Book")),
-          ],
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: "Book Title"),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: priceController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: "Price"),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: imageUrlController,
+                decoration: const InputDecoration(labelText: "Image URL"),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: descriptionController,
+                decoration: const InputDecoration(labelText: "Description"),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  if (isEditing) {
+                    updateBook(widget.bookId!);
+                  } else {
+                    addBook();
+                  }
+                },
+                child: Text(isEditing ? "Update Book" : "Add Book"),
+              ),
+            ],
+          ),
         ),
       ),
     );
