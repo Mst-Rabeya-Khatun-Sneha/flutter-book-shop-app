@@ -16,6 +16,9 @@ class _AddBookPageState extends State<AddBookPage> {
   final priceController = TextEditingController();
   final imageUrlController = TextEditingController();
   final descriptionController = TextEditingController();
+  String selectedCategory = 'Academic'; // default category
+
+  final List<String> categories = ['Academic', 'Fiction', 'Non Fiction'];
 
   @override
   void initState() {
@@ -26,6 +29,7 @@ class _AddBookPageState extends State<AddBookPage> {
       priceController.text = widget.existingData!['price']?.toString() ?? '';
       imageUrlController.text = widget.existingData!['imageUrl'] ?? '';
       descriptionController.text = widget.existingData!['description'] ?? '';
+      selectedCategory = widget.existingData!['category'] ?? 'Academic';
     }
   }
 
@@ -44,6 +48,7 @@ class _AddBookPageState extends State<AddBookPage> {
       'price': double.tryParse(priceController.text.trim()) ?? 0,
       'imageUrl': imageUrlController.text.trim(),
       'description': descriptionController.text.trim(),
+      'category': selectedCategory, // save category
     });
     Navigator.pop(context); // go back after adding
   }
@@ -55,6 +60,7 @@ class _AddBookPageState extends State<AddBookPage> {
       'price': double.tryParse(priceController.text.trim()) ?? 0,
       'imageUrl': imageUrlController.text.trim(),
       'description': descriptionController.text.trim(),
+      'category': selectedCategory, // update category
     });
     Navigator.pop(context); // go back after updating
   }
@@ -93,6 +99,35 @@ class _AddBookPageState extends State<AddBookPage> {
                 decoration: const InputDecoration(labelText: "Description"),
                 maxLines: 3,
               ),
+              const SizedBox(height: 12),
+
+              // Category Dropdown
+              Row(
+                children: [
+                  const Text(
+                    "Category: ",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(width: 16),
+                  DropdownButton<String>(
+                    value: selectedCategory,
+                    items: categories
+                        .map((cat) => DropdownMenuItem(
+                      value: cat,
+                      child: Text(cat),
+                    ))
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          selectedCategory = value;
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () {

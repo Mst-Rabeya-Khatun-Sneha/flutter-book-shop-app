@@ -20,7 +20,19 @@ class CartPage extends StatelessWidget {
     final userId = FirebaseAuth.instance.currentUser!.uid;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("🛒 Your Cart")),
+      appBar: AppBar(
+        title: const Text("🛒 Your Cart"),
+        leading: TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text(
+            "Back",
+            style: TextStyle(
+              color: Colors.white, // Text color
+              fontSize: 16,
+            ),
+          ),
+        ),
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('users')
@@ -44,9 +56,12 @@ class CartPage extends StatelessWidget {
                   leading: Image.network(book['imageUrl'], width: 50),
                   title: Text(book['title']),
                   subtitle: Text("৳${book['price']}"),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
+                  trailing: TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.red,
+                    ),
                     onPressed: () => removeItem(cartItems[index].id),
+                    child: const Text("Remove"),
                   ),
                 ),
               );
