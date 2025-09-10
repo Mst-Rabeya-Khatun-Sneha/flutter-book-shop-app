@@ -21,7 +21,7 @@ class _ProfilePageState extends State<ProfilePage> {
   bool isLoading = false;
   File? selectedImage;
 
-  final userId = FirebaseAuth.instance.currentUser!.uid;
+  final userId = FirebaseAuth.instance.currentUser?.uid;
 
   @override
   void initState() {
@@ -30,6 +30,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> loadUserData() async {
+    if (userId == null) return;
     final doc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
     if (doc.exists) {
       final data = doc.data()!;
@@ -51,6 +52,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<String?> uploadImage(File file) async {
+    if (userId == null) return null;
     final storageRef = FirebaseStorage.instance.ref().child('profile_images/$userId.jpg');
     await storageRef.putFile(file);
     return await storageRef.getDownloadURL();
@@ -59,26 +61,23 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      isLoading = true;
-    });
+    setState(() { isLoading = true; });
 
     String? uploadedImageUrl = imageUrl;
-
     if (selectedImage != null) {
       uploadedImageUrl = await uploadImage(selectedImage!);
     }
 
-    await FirebaseFirestore.instance.collection('users').doc(userId).set({
-      'name': nameController.text.trim(),
-      'phone': phoneController.text.trim(),
-      'address': addressController.text.trim(),
-      'imageUrl': uploadedImageUrl,
-    }, SetOptions(merge: true));
+    if (userId != null) {
+      await FirebaseFirestore.instance.collection('users').doc(userId).set({
+        'name': nameController.text.trim(),
+        'phone': phoneController.text.trim(),
+        'address': addressController.text.trim(),
+        'imageUrl': uploadedImageUrl,
+      }, SetOptions(merge: true));
+    }
 
-    setState(() {
-      isLoading = false;
-    });
+    setState(() { isLoading = false; });
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Profile updated successfully")),
@@ -87,6 +86,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (userId == null) return const Scaffold(body: Center(child: Text("User not logged in")));
+
     return Scaffold(
       appBar: AppBar(title: const Text("Edit Profile")),
       body: isLoading

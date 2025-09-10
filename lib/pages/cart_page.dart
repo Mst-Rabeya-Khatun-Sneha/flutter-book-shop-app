@@ -6,7 +6,8 @@ class CartPage extends StatelessWidget {
   const CartPage({super.key});
 
   Future<void> removeItem(String id) async {
-    final userId = FirebaseAuth.instance.currentUser!.uid;
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
     await FirebaseFirestore.instance
         .collection('users')
         .doc(userId)
@@ -17,22 +18,15 @@ class CartPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userId = FirebaseAuth.instance.currentUser!.uid;
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      return const Scaffold(
+        body: Center(child: Text("User not logged in")),
+      );
+    }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("🛒 Your Cart"),
-        leading: TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text(
-            "Back",
-            style: TextStyle(
-              color: Colors.white, // Text color
-              fontSize: 16,
-            ),
-          ),
-        ),
-      ),
+      appBar: AppBar(title: const Text("🛒 Your Cart")),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('users')
@@ -53,13 +47,13 @@ class CartPage extends StatelessWidget {
               return Card(
                 margin: const EdgeInsets.all(8),
                 child: ListTile(
-                  leading: Image.network(book['imageUrl'], width: 50),
-                  title: Text(book['title']),
-                  subtitle: Text("৳${book['price']}"),
+                  leading: book['imageUrl'] != null
+                      ? Image.network(book['imageUrl'], width: 50, errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_not_supported))
+                      : const Icon(Icons.book),
+                  title: Text(book['title'] ?? ''),
+                  subtitle: Text("৳${book['price'] ?? 0}"),
                   trailing: TextButton(
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.red,
-                    ),
+                    style: TextButton.styleFrom(foregroundColor: Colors.red),
                     onPressed: () => removeItem(cartItems[index].id),
                     child: const Text("Remove"),
                   ),

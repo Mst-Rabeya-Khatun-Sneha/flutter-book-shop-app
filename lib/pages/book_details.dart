@@ -14,7 +14,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   final reviewController = TextEditingController();
 
   Future<void> addToCart() async {
-    final userId = FirebaseAuth.instance.currentUser!.uid;
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
     await FirebaseFirestore.instance
         .collection('users')
         .doc(userId)
@@ -28,6 +29,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
 
   Future<void> addReview() async {
     if (reviewController.text.trim().isEmpty) return;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
     await FirebaseFirestore.instance
         .collection('books')
@@ -35,7 +38,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
         .collection('reviews')
         .add({
       'review': reviewController.text.trim(),
-      'user': FirebaseAuth.instance.currentUser!.email,
+      'user': user.email,
       'timestamp': FieldValue.serverTimestamp(),
     });
 
@@ -45,15 +48,13 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   @override
   Widget build(BuildContext context) {
     final data = widget.book.data() as Map<String, dynamic>;
-
     return Scaffold(
       appBar: AppBar(title: Text(data['title'] ?? 'Book Details')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Book Image
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Image.network(
@@ -62,41 +63,22 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                 width: double.infinity,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) =>
-                const Icon(Icons.image_not_supported,
-                    size: 100, color: Colors.grey),
+                const Icon(Icons.image_not_supported, size: 100, color: Colors.grey),
               ),
             ),
             const SizedBox(height: 12),
-
-            // Price
-            Text(
-              "Price: ৳${data['price']}",
-              style: const TextStyle(fontSize: 18, color: Colors.green),
-            ),
+            Text("Price: ৳${data['price']}", style: const TextStyle(fontSize: 18, color: Colors.green)),
             const SizedBox(height: 10),
-
-            // Description
-            if (data['description'] != null &&
-                data['description'].toString().isNotEmpty)
+            if ((data['description'] ?? '').toString().isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Description",
-                    style:
-                    TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
+                  const Text("Description", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 5),
-                  Text(
-                    data['description'],
-                    style: const TextStyle(fontSize: 15, height: 1.4),
-                    textAlign: TextAlign.justify,
-                  ),
+                  Text(data['description'], style: const TextStyle(fontSize: 15, height: 1.4)),
                 ],
               ),
             const SizedBox(height: 16),
-
-            // Add to Cart Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -106,12 +88,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
               ),
             ),
             const Divider(height: 30),
-
-            // Reviews Section
-            const Text(
-              "Reviews",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            const Text("Reviews", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
@@ -140,20 +117,14 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
                 );
               },
             ),
-
-            // Write Review
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: TextField(
                 controller: reviewController,
                 decoration: InputDecoration(
                   labelText: "Write a review",
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.send),
-                    onPressed: addReview,
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  suffixIcon: IconButton(icon: const Icon(Icons.send), onPressed: addReview),
                 ),
               ),
             ),

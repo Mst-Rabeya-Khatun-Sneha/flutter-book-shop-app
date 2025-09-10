@@ -16,14 +16,13 @@ class _AddBookPageState extends State<AddBookPage> {
   final priceController = TextEditingController();
   final imageUrlController = TextEditingController();
   final descriptionController = TextEditingController();
-  String selectedCategory = 'Academic'; // default category
+  String selectedCategory = 'Academic';
 
   final List<String> categories = ['Academic', 'Fiction', 'Non Fiction'];
 
   @override
   void initState() {
     super.initState();
-    // Populate controllers if editing existing book
     if (widget.existingData != null) {
       titleController.text = widget.existingData!['title'] ?? '';
       priceController.text = widget.existingData!['price']?.toString() ?? '';
@@ -33,10 +32,8 @@ class _AddBookPageState extends State<AddBookPage> {
     }
   }
 
-  /// Add new book
   Future<void> addBook() async {
-    if (titleController.text.trim().isEmpty ||
-        priceController.text.trim().isEmpty) {
+    if (titleController.text.trim().isEmpty || priceController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("⚠ Please fill title & price")),
       );
@@ -48,31 +45,29 @@ class _AddBookPageState extends State<AddBookPage> {
       'price': double.tryParse(priceController.text.trim()) ?? 0,
       'imageUrl': imageUrlController.text.trim(),
       'description': descriptionController.text.trim(),
-      'category': selectedCategory, // save category
+      'category': selectedCategory,
     });
-    Navigator.pop(context); // go back after adding
+
+    Navigator.pop(context);
   }
 
-  /// Update existing book
   Future<void> updateBook(String id) async {
     await FirebaseFirestore.instance.collection('books').doc(id).update({
       'title': titleController.text.trim(),
       'price': double.tryParse(priceController.text.trim()) ?? 0,
       'imageUrl': imageUrlController.text.trim(),
       'description': descriptionController.text.trim(),
-      'category': selectedCategory, // update category
+      'category': selectedCategory,
     });
-    Navigator.pop(context); // go back after updating
+
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.bookId != null;
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? "Edit Book" : "Add Book"),
-      ),
+      appBar: AppBar(title: Text(isEditing ? "Edit Book" : "Add Book")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
@@ -100,22 +95,14 @@ class _AddBookPageState extends State<AddBookPage> {
                 maxLines: 3,
               ),
               const SizedBox(height: 12),
-
-              // Category Dropdown
               Row(
                 children: [
-                  const Text(
-                    "Category: ",
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  const Text("Category: ", style: TextStyle(fontSize: 16)),
                   const SizedBox(width: 16),
                   DropdownButton<String>(
                     value: selectedCategory,
                     items: categories
-                        .map((cat) => DropdownMenuItem(
-                      value: cat,
-                      child: Text(cat),
-                    ))
+                        .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
                         .toList(),
                     onChanged: (value) {
                       if (value != null) {
@@ -127,9 +114,9 @@ class _AddBookPageState extends State<AddBookPage> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 24),
-              ElevatedButton(
+              // TextButton instead of ElevatedButton
+              TextButton(
                 onPressed: () {
                   if (isEditing) {
                     updateBook(widget.bookId!);
@@ -137,7 +124,10 @@ class _AddBookPageState extends State<AddBookPage> {
                     addBook();
                   }
                 },
-                child: Text(isEditing ? "Update Book" : "Add Book"),
+                child: Text(
+                  isEditing ? "Update Book" : "Add Book",
+                  style: const TextStyle(color: Colors.blue, fontSize: 16),
+                ),
               ),
             ],
           ),
